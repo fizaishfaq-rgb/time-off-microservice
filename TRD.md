@@ -71,4 +71,69 @@ Table: EmployeeBalance
 
 * Polling vs Webhooks
 * Caching vs real-time validation
-  
+  ---
+
+## 10. Detailed API Design
+
+### 1. Request Leave
+
+POST /leave/request
+
+Request Body:
+{
+"employeeId": "123",
+"locationId": "L1",
+"days": 2
+}
+
+Response:
+
+* Success: Leave requested successfully
+* Error: Insufficient balance
+
+---
+
+### 2. Get Balance
+
+GET /leave/balance?employeeId=123&locationId=L1
+
+Response:
+{
+"balance": 10
+}
+
+---
+
+### 3. Approve Leave
+
+POST /leave/approve
+
+Request Body:
+{
+"requestId": "REQ123"
+}
+
+Response:
+
+* Success: Leave approved
+
+---
+
+### 4. Sync with HCM
+
+POST /sync/hcm
+
+Response:
+
+* Success: Data synced
+---
+
+## 11. System Flow
+
+1. Employee sends leave request
+2. Microservice checks local balance
+3. Microservice calls HCM API to validate
+4. If valid → approve request
+5. If invalid → reject request
+6. Update balance in both systems
+
