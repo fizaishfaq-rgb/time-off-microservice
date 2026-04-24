@@ -43,16 +43,12 @@ The Time-Off Microservice will act as an intermediary between ReadyOn and HCM. I
 
 ## 6. Database Design
 
-## 6. Database Design
-
 ### Table: EmployeeBalance
 
 * employeeId (string)
 * locationId (string)
 * balance (number)
 * lastUpdated (timestamp)
-
----
 
 ### Table: LeaveRequest
 
@@ -63,6 +59,7 @@ The Time-Off Microservice will act as an intermediary between ReadyOn and HCM. I
 * status (pending / approved / rejected)
 * createdAt (timestamp)
 
+---
 
 ## 7. Sync Strategy
 
@@ -84,7 +81,8 @@ The Time-Off Microservice will act as an intermediary between ReadyOn and HCM. I
 
 * Polling vs Webhooks
 * Caching vs real-time validation
-  ---
+
+---
 
 ## 10. Detailed API Design
 
@@ -93,11 +91,14 @@ The Time-Off Microservice will act as an intermediary between ReadyOn and HCM. I
 POST /leave/request
 
 Request Body:
+
+```
 {
-"employeeId": "123",
-"locationId": "L1",
-"days": 2
+  "employeeId": "123",
+  "locationId": "L1",
+  "days": 2
 }
+```
 
 Response:
 
@@ -111,9 +112,12 @@ Response:
 GET /leave/balance?employeeId=123&locationId=L1
 
 Response:
+
+```
 {
-"balance": 10
+  "balance": 10
 }
+```
 
 ---
 
@@ -122,9 +126,12 @@ Response:
 POST /leave/approve
 
 Request Body:
+
+```
 {
-"requestId": "REQ123"
+  "requestId": "REQ123"
 }
+```
 
 Response:
 
@@ -139,6 +146,7 @@ POST /sync/hcm
 Response:
 
 * Success: Data synced
+
 ---
 
 ## 11. System Flow
@@ -154,8 +162,6 @@ Response:
 
 ## 12. Data Consistency Strategy
 
-To maintain consistency between ReadyOn and HCM:
-
 * Every leave request will first be validated against the HCM system
 * Local database will act as a temporary cache but not the source of truth
 * In case of mismatch, HCM data will override local data
@@ -164,8 +170,6 @@ To maintain consistency between ReadyOn and HCM:
 ---
 
 ## 13. Request Lifecycle
-
-Each leave request will go through the following states:
 
 * Pending → Initial state when request is created
 * Approved → After validation and manager approval
@@ -179,6 +183,7 @@ Each leave request will go through the following states:
 
   * Retry mechanism will be triggered
   * Request will remain in "pending" state
+
 * If HCM returns inconsistent data:
 
   * System will log discrepancy
@@ -187,8 +192,6 @@ Each leave request will go through the following states:
 ---
 
 ## 15. Idempotency Handling
-
-To prevent duplicate requests:
 
 * Each request will have a unique requestId
 * Duplicate requests with same requestId will be ignored
@@ -200,5 +203,6 @@ To prevent duplicate requests:
 * System will accept bulk updates from HCM
 * Local balances will be updated accordingly
 * Conflicts will be resolved using latest timestamp
+
 
 
