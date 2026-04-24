@@ -13,6 +13,7 @@ Input:
 Action:
 
 * User sends POST /leave/request
+* System creates request with status = pending
 * System checks local balance
 * System validates with HCM
 
@@ -20,7 +21,9 @@ Expected:
 
 * Request status = approved
 * Updated balance = 8
+* HCM is treated as source of truth
 * HCM and local DB are in sync
+* API returns success response (200)
 
 ---
 
@@ -35,11 +38,13 @@ Input:
 Action:
 
 * User sends POST /leave/request
+* System checks local balance
 
 Expected:
 
 * Request status = rejected
 * No change in balance
+* API returns error response (400)
 
 ---
 
@@ -53,11 +58,13 @@ Input:
 Action:
 
 * User sends POST /leave/request
+* System checks local balance
 
 Expected:
 
-* Request rejected
+* Request status = rejected
 * No change in balance
+* API returns error response (400)
 
 ---
 
@@ -77,6 +84,7 @@ Expected:
 
 * Balance validated successfully
 * Request proceeds normally
+* API returns success response (200)
 
 ---
 
@@ -88,12 +96,15 @@ Input:
 
 Action:
 
-* System attempts to validate request
+* User sends POST /leave/request
+* System creates request with status = pending
+* System attempts to validate with HCM
 
 Expected:
 
 * Retry mechanism triggered
 * Request status remains pending
+* API returns temporary failure response (503)
 
 ---
 
@@ -106,12 +117,14 @@ Input:
 
 Action:
 
-* System compares both balances
+* System compares local and HCM balances
 
 Expected:
 
+* HCM is treated as source of truth
 * Local balance updated to 5
 * System syncs with HCM
+* API reflects updated balance
 
 ---
 
@@ -130,6 +143,7 @@ Action:
 Expected:
 
 * Local database updated correctly
+* All employee balances reflect HCM data
 
 ---
 
@@ -141,12 +155,12 @@ Input:
 
 Action:
 
-* System resolves conflict
+* System resolves conflict using timestamps
 
 Expected:
 
 * Latest timestamp value is used
-* Data remains consistent
+* Data remains consistent across systems
 
 ---
 
@@ -156,6 +170,7 @@ Expected:
 
 Input:
 
+* requestId = REQ123
 * Same requestId sent twice
 
 Action:
@@ -166,6 +181,8 @@ Expected:
 
 * First request processed
 * Second request ignored
+* No duplicate records created
+* System remains idempotent
 
 ---
 
@@ -185,6 +202,7 @@ Expected:
 
 * Request rejected
 * Error returned
+* API returns validation error (400)
 
 ---
 
@@ -202,6 +220,7 @@ Expected:
 
 * Error returned
 * Request not processed
+* API returns error response (404)
 
 ---
 
@@ -219,10 +238,35 @@ Expected:
 
 * Request rejected
 * System prevents invalid operation
+* API returns error response (400)
 
 ---
 
-## 6. Test Coverage Summary
+## 6. Concurrency Test
+
+### Test Case 13: Concurrent Requests
+
+Input:
+
+* employeeId = 123
+* balance = 5
+* Two requests of 3 days sent simultaneously
+
+Action:
+
+* System processes both requests concurrently
+
+Expected:
+
+* Only one request approved
+* Second request rejected due to insufficient balance
+* No negative balance occurs
+* No race condition occurs
+* Data remains consistent
+
+---
+
+## 7. Test Coverage Summary
 
 This test suite covers:
 
@@ -231,5 +275,6 @@ This test suite covers:
 * Data synchronization (batch updates, conflicts)
 * Idempotency (duplicate prevention)
 * Edge cases (invalid inputs, extreme values)
+* Concurrency handling (simultaneous requests)
 
 The goal is to ensure system reliability, data consistency, and robustness against failures.
