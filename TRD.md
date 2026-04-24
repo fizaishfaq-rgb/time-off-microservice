@@ -43,13 +43,26 @@ The Time-Off Microservice will act as an intermediary between ReadyOn and HCM. I
 
 ## 6. Database Design
 
-Table: EmployeeBalance
+## 6. Database Design
 
-* employeeId
-* locationId
-* balance
+### Table: EmployeeBalance
+
+* employeeId (string)
+* locationId (string)
+* balance (number)
+* lastUpdated (timestamp)
 
 ---
+
+### Table: LeaveRequest
+
+* requestId (string)
+* employeeId (string)
+* locationId (string)
+* days (number)
+* status (pending / approved / rejected)
+* createdAt (timestamp)
+
 
 ## 7. Sync Strategy
 
@@ -136,4 +149,56 @@ Response:
 4. If valid → approve request
 5. If invalid → reject request
 6. Update balance in both systems
+
+---
+
+## 12. Data Consistency Strategy
+
+To maintain consistency between ReadyOn and HCM:
+
+* Every leave request will first be validated against the HCM system
+* Local database will act as a temporary cache but not the source of truth
+* In case of mismatch, HCM data will override local data
+* Periodic sync will reconcile differences
+
+---
+
+## 13. Request Lifecycle
+
+Each leave request will go through the following states:
+
+* Pending → Initial state when request is created
+* Approved → After validation and manager approval
+* Rejected → If insufficient balance or validation fails
+
+---
+
+## 14. Failure Handling Strategy
+
+* If HCM API fails:
+
+  * Retry mechanism will be triggered
+  * Request will remain in "pending" state
+* If HCM returns inconsistent data:
+
+  * System will log discrepancy
+  * Trigger sync process
+
+---
+
+## 15. Idempotency Handling
+
+To prevent duplicate requests:
+
+* Each request will have a unique requestId
+* Duplicate requests with same requestId will be ignored
+
+---
+
+## 16. Batch Sync Handling
+
+* System will accept bulk updates from HCM
+* Local balances will be updated accordingly
+* Conflicts will be resolved using latest timestamp
+
 
